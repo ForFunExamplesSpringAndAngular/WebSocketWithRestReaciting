@@ -1,4 +1,6 @@
 var stompClient = null;
+var chanelName = "";
+var localhost = "http://localhost:8081/";
 
 function setConnected(connected) {
     $("#connect").prop("disabled", connected);
@@ -15,10 +17,11 @@ function setConnected(connected) {
 function connect() {
     var socket = new SockJS('/gs-guide-websocket');
     stompClient = Stomp.over(socket);
+    chanelName = '/topic/' + $("#chanel-name").val();
     stompClient.connect({}, function (frame) {
         setConnected(true);
         console.log('Connected: ' + frame);
-        stompClient.subscribe('/topic/greetings', function (greeting) {
+        stompClient.subscribe(chanelName, function (greeting) {
             showGreeting(JSON.parse(greeting.body).content);
         });
     });
@@ -36,6 +39,16 @@ function sendName() {
     stompClient.send("/app/hello", {}, JSON.stringify({'name': $("#name").val()}));
 }
 
+function sendNameByRest() {
+	let message = $("#name").val();
+	let address = localhost + "chanel/send";
+	$.get(address, {chanelName: chanelName, message: message}).
+		done(function (data) {
+			console.log("zakończone sukcesem");
+		});
+}
+ 
+
 function showGreeting(message) {
     $("#greetings").append("<tr><td>" + message + "</td></tr>");
 }
@@ -47,5 +60,6 @@ $(function () {
     $( "#connect" ).click(function() { connect(); });
     $( "#disconnect" ).click(function() { disconnect(); });
     $( "#send" ).click(function() { sendName(); });
+    $( "#send-by-rest" ).click(function() { sendNameByRest(); });
 });
 
